@@ -25,7 +25,9 @@ module AllureRSpec
     end
 
     def example_group_started(group)
-      AllureRubyAdaptorApi::Builder.start_suite(group.metadata[:example_group][:description_args].first, labels(group))
+      label_dict = labels(group)
+      label_dict[:thread] = Thread.current.object_id + ENV['TEST_ENV_NUMBER'].to_i
+      AllureRubyAdaptorApi::Builder.start_suite(group.metadata[:example_group][:description_args].first, label_dict)
       super
     end
 
@@ -48,9 +50,11 @@ module AllureRSpec
     end
 
     def example_started(example)
+      label_dict = labels(example)
+      label_dict[:thread] = Thread.current.object_id + ENV['TEST_ENV_NUMBER'].to_i
       suite = example.metadata[:example_group][:description_args].first
       test = example.metadata[:description]
-      AllureRubyAdaptorApi::Builder.start_test(suite, test, labels(example))
+      AllureRubyAdaptorApi::Builder.start_test(suite, test, label_dict)
       super
     end
 
@@ -76,6 +80,7 @@ module AllureRSpec
           map { |label| [label, example_or_group.metadata[label]] }.
           find_all { |value| !value[1].nil? }.
           inject({}) { |res, value| res.merge(value[0] => value[1]) }
+      
     end
 
   end
